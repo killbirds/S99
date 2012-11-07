@@ -3,6 +3,8 @@ import org.scalatest.matchers._
 
 import scala.annotation._
 
+import scala.util.Random
+
 class S99Test extends FunSpec with ShouldMatchers {
 
 	def last[T](list: List[T]): T = {
@@ -128,6 +130,70 @@ class S99Test extends FunSpec with ShouldMatchers {
 		}
 	}
 
+	def encodeDirect[T](list: List[T]): List[(Int, T)] = {
+		var init = (0, list.head)
+		list.foldLeft(List[(Int, T)]()) { case (result, entry) =>
+			if(init._2 == entry) {
+				init = (init._1 + 1, entry)
+				result
+			}else {
+				val nResult = result :+ init
+				init = (1, entry)
+				nResult
+			}
+		} :+ init
+	}
+
+	def duplicate[T](list: List[T]): List[T] = {
+		list.flatMap { entry =>
+			List(entry, entry)
+		}
+	}
+
+	def duplicateN[T](n: Int, list: List[T]): List[T] = {
+		list.flatMap { entry =>
+			(0 until n).map{i => entry}
+		}
+	}
+
+	def drop[T](n: Int, list: List[T]): List[T] = {
+		list.zipWithIndex.foldLeft(List[T]()) { case (result, (entry, index)) =>
+
+			if((index + 1) % n == 0) {
+				result
+			} else {
+				result :+ entry
+			}
+		}
+	}
+
+	def split[T](n: Int, list: List[T]): (List[T], List[T]) = {
+		list.splitAt(n)
+	}
+
+	def slice[T](from: Int, to: Int, list: List[T]): List[T] = {
+		list.slice(from, to)
+	}
+
+	def rotate[T](n: Int, list: List[T]): List[T] = {
+		if(n < 0) {
+			rotate(list.size + n, list)
+		} else {
+			list.splitAt(n) match {
+				case (f, s) =>
+					s ::: f
+			}			
+		}
+	}
+
+	def removeAt[T](n: Int, list: List[T]): (List[T], T) = {
+		list.splitAt(n) match {
+			case (f, s) =>
+				(f ::: s.tail, s.head)		
+		}
+		
+	}
+
 	describe("11 to 20 problems") {
 		it("11. Modified run-length encoding.") {
 			info("Modify the result of problem P10 in such a way that if an element has no duplicates it is simply copied into the result list. Only elements with duplicates are transferred as (N, E) terms.")
@@ -138,6 +204,193 @@ class S99Test extends FunSpec with ShouldMatchers {
 			info("Given a run-length code list generated as specified in problem P10, construct its uncompressed version.")
 			decode(List((4, 'a), (1, 'b), (2, 'c), (2, 'a), (1, 'd), (4, 'e))) should be (List('a, 'a, 'a, 'a, 'b, 'c, 'c, 'a, 'a, 'd, 'e, 'e, 'e, 'e))
 		}
+
+		it("13. Run-length encoding of a list (direct solution).") {
+			info("""Implement the so-called run-length encoding data compression method directly. I.e. don't use other methods you've written (like P09's pack); do all the work directly.""")
+			encodeDirect(List('a, 'a, 'a, 'a, 'b, 'c, 'c, 'a, 'a, 'd, 'e, 'e, 'e, 'e)) should be (List((4,'a), (1,'b), (2,'c), (2,'a), (1,'d), (4,'e)))
+		}
+
+		it("14. Duplicate the elements of a list.") {
+			duplicate(List('a, 'b, 'c, 'c, 'd)) should be (List('a, 'a, 'b, 'b, 'c, 'c, 'c, 'c, 'd, 'd))
+		}
+
+		it("15. Duplicate the elements of a list a given number of times.") {
+			duplicateN(3, List('a, 'b, 'c, 'c, 'd)) should be (List('a, 'a, 'a, 'b, 'b, 'b, 'c, 'c, 'c, 'c, 'c, 'c, 'd, 'd, 'd))
+		}
+
+		it("16. Drop every Nth element from a list.") {
+			drop(3, List('a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k)) should be (List('a, 'b, 'd, 'e, 'g, 'h, 'j, 'k))
+		}
+
+		it("17. Split a list into two parts.") {
+			info("The length of the first part is given. Use a Tuple for your result.")
+
+			split(3, List('a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k)) should be ((List('a, 'b, 'c),List('d, 'e, 'f, 'g, 'h, 'i, 'j, 'k)))
+		}
+
+		it("18. Extract a slice from a list.") {
+			info("Given two indices, I and K, the slice is the list containing the elements from and including the Ith element up to but not including the Kth element of the original list. Start counting the elements with 0.")
+			slice(3, 7, List('a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k)) should be (List('d, 'e, 'f, 'g))
+		}
+
+		it("19. Rotate a list N places to the left.") {
+			rotate(3, List('a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k)) should be (List('d, 'e, 'f, 'g, 'h, 'i, 'j, 'k, 'a, 'b, 'c))
+
+			rotate(-2, List('a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k)) should be (List('j, 'k, 'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i))
+		}
+
+		it("20. Remove the Kth element from a list.") {
+			info("Return the list and the removed element in a Tuple. Elements are numbered from 0.")
+
+			removeAt(1, List('a, 'b, 'c, 'd)) should be ((List('a, 'c, 'd),'b))
+		}
+	}
+
+	def insertAt[T](target: T, n: Int, list: List[T]): List[T] = {
+		list.patch(n, target :: Nil, 0)
+	}
+
+	def range(from: Int, to: Int): List[Int] = {
+		(from to to).toList
+	}
+
+	def randomSelect[T](n: Int, list: List[T]): List[T] = {
+		(for(i <- 0 until n) yield {
+			list(Random.nextInt(list.size))
+		}).toList
+	}
+
+	def lotto(n: Int, max: Int): List[Int] = {
+		(0 until n).map { i =>
+			Random.nextInt(max)
+		}.toList
+	}
+
+	def randomPermute[T](list: List[T]): List[T] = {
+		list match {
+			case Nil => Nil
+			case _ =>
+				removeAt(Random.nextInt(list.size), list) match {
+					case (list, removed) =>
+						removed :: randomPermute(list)
+				}
+		}
+		
+	}
+
+	def combinations[T](n: Int, list: List[T]): List[List[T]] = {
+		list.combinations(n).toList
+	}
+
+	// def group3[T](list: List[T]): List[List[List[T]]] = {
+	// 	(for{
+	// 		a <- list
+	// 		b <- list diff List(a)
+	// 		c <- list diff List(a, b)
+	// 		d <- list diff List(a, b, c)
+	// 		e <- list diff List(a, b, c, d)
+	// 	} yield {
+	// 		val e2 = List(a,b)
+	// 		val e3 = List(c,d,e)
+	// 		List(e2.toSet, e3.toSet, (list diff e2 diff e3).toSet)
+	// 	}).distinct map { _.map (_.toList) }
+	// }	
+
+	def group3[T](list: List[T]): List[List[List[T]]] = {
+		list.combinations(2).toList.map { e2 =>
+			(list diff e2).combinations(3).toList.map { e3 =>
+				List(e2, e3, list diff e2 diff e3)
+			}
+		}.flatten
+	}	
+
+	def group[T](n: List[Int], list: List[T]): List[List[List[T]]] = {
+		list.combinations(n(0)).toList.map { e2 =>
+			(list diff e2).combinations(n(1)).toList.map { e3 =>
+				List(e2, e3, list diff e2 diff e3)
+			}
+		}.flatten
+	}
+
+	def lsort[T](list: List[List[T]]): List[List[T]] = {
+		list.sortBy(_.size)
+	}
+
+	def lsortFreq[T](list: List[List[T]]): List[List[T]] = {
+		list.groupBy(_.size).toList.sortBy(_._2.size).map(_._2).flatten
+	}
+
+	describe("21 to 30 problems") {
+		it("21. Insert an element at a given position into a list.") {
+			insertAt('new, 1, List('a, 'b, 'c, 'd)) should be (List('a, 'new, 'b, 'c, 'd))
+		}
+
+		it("22. Create a list containing all integers within a given range.") {
+			range(4, 9) should be (List(4, 5, 6, 7, 8, 9))
+		}
+
+		it("23. Extract a given number of randomly selected elements from a list.") {
+			val result = randomSelect(3, List('a, 'b, 'c, 'd, 'e, 'f, 'g, 'h))
+			info("" + result)
+			result should have size (3)
+		}
+
+		it("24. Lotto: Draw N different random numbers from the set 1..M.") {
+			val result = lotto(6, 49)
+			info("" + result)
+			result should have size (6)
+		}
+
+		it("25. Generate a random permutation of the elements of a list.") {
+			val expected = List('a, 'b, 'c, 'd, 'e, 'f)
+			val result = randomPermute(expected)
+			info("" + result)
+			result should not be (expected)
+			result.diff(expected).isEmpty should be (true)
+		}
+
+		it("26. Generate the combinations of K distinct objects chosen from the N elements of a list.") {
+			info("In how many ways can a committee of 3 be chosen from a group of 12 people? We all know that there are C(12,3) = 220 possibilities (C(N,K) denotes the well-known binomial coefficient). For pure mathematicians, this result may be great. But we want to really generate all the possibilities.")
+			val result = combinations(3, List('a, 'b, 'c, 'd, 'e, 'f))
+			info("" + result)
+			info("size : " + result.size)
+		}
+
+		it("27. Group the elements of a set into disjoint subsets.") {
+			info("In how many ways can a group of 9 people work in 3 disjoint subgroups of 2, 3 and 4 persons? Write a function that generates all the possibilities.")
+			val source = List("Aldo", "Beat", "Carla", "David", "Evi", "Flip", "Gary", "Hugo", "Ida")
+			var result = group3(source)
+			result foreach { entry: List[List[String]] =>
+				source.size should be (entry.flatten.size)
+				source diff entry.flatten should have size (0)
+			}
+			info("size : " + result.size)
+
+			info("Generalize the above predicate in a way that we can specify a list of group sizes and the predicate will return a list of groups.")
+			result = group(List(2, 2, 5), source)
+			result foreach { entry: List[List[String]] =>
+				source.size should be (entry.flatten.size)
+				source diff entry.flatten should have size (0)
+			}
+			info("size : " + result.size)
+
+		}
+
+		it("28. Sorting a list of lists according to length of sublists.") {
+			info("We suppose that a list contains elements that are lists themselves. The objective is to sort the elements of the list according to their length. E.g. short lists first, longer lists later, or vice versa.") 
+
+			lsort(List(List('a, 'b, 'c), List('d, 'e), List('f, 'g, 'h), List('d, 'e), List('i, 'j, 'k, 'l), List('m, 'n), List('o))) should be (List(List('o), List('d, 'e), List('d, 'e), List('m, 'n), List('a, 'b, 'c), List('f, 'g, 'h), List('i, 'j, 'k, 'l)))
+
+			info("Again, we suppose that a list contains elements that are lists themselves. But this time the objective is to sort the elements according to their length frequency; i.e. in the default, sorting is done ascendingly, lists with rare lengths are placed, others with a more frequent length come later.")
+
+			lsortFreq(List(List('a, 'b, 'c), List('d, 'e), List('f, 'g, 'h), List('d, 'e), List('i, 'j, 'k, 'l), List('m, 'n), List('o))) should be (List(List('i, 'j, 'k, 'l), List('o), List('a, 'b, 'c), List('f, 'g, 'h), List('d, 'e), List('d, 'e), List('m, 'n)))
+		}
+	}
+
+	info("Arithmetic")
+
+	
+	describe("31 ~ 40 problems") {
 
 	}
 } 
