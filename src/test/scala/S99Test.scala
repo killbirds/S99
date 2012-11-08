@@ -5,6 +5,8 @@ import scala.annotation._
 
 import scala.util.Random
 
+import scala.math
+
 class S99Test extends FunSpec with ShouldMatchers {
 
 	def last[T](list: List[T]): T = {
@@ -389,8 +391,94 @@ class S99Test extends FunSpec with ShouldMatchers {
 
 	info("Arithmetic")
 
+	class ArithmeticSupport(num: Int) {
+		def isPrime: Boolean = num > 1 && (2 to (math.sqrt(num) toInt)).forall(num % _ != 0)
+
+		def isCoprimeTo(other: Int): Boolean = gcd(num, other) == 1
+
+		def totient: Int = {
+			if(num == 1) 1
+			else {
+				(2 to (math.sqrt(num).toInt)).filter(num % _ == 0).size * 2 + 2
+			}
+		}
+
+		def primeFactors: List[Int] = {
+			def prime(num: Int, p: Int): List[Int] = {
+				if(num <= p) List(num)
+				else if(num % p == 0) {
+					p :: prime(num / p, 2)
+				}else {
+					prime(num, p + 1)
+				}
+			}
+			prime(num, 2)
+		}
+
+		def primeFactorMultiplicity: Map[Int, Int] = {
+			primeFactors.groupBy(p => p).mapValues{_.size}
+		}
+	}
+
+	implicit def toArithmeticSupport(num: Int): ArithmeticSupport = new ArithmeticSupport(num)
+
+	def gcd(a: Int, b: Int): Int = {
+		if(a > b) gcd(b, a)
+		else if(a == 0) b
+		else gcd(b % a, a)
+
+	}
 	
 	describe("31 ~ 40 problems") {
+		it("31. Determine whether a given integer number is prime.") {
+			7.isPrime should be (true)
+		}
 
+		it("32. Determine the greatest common divisor of two positive integer numbers.") {
+			gcd(36, 63) should be (9)
+		}
+
+		it("33. Determine whether two positive integer numbers are coprime.") {
+			info("Two numbers are coprime if their greatest common divisor equals 1.")
+
+			35.isCoprimeTo(64) should be (true)
+		}
+
+		it("34. Calculate Euler's totient function phi(m).") {
+			info("Euler's so-called totient function phi(m) is defined as the number of positive integers r (1 <= r <= m) that are coprime to m.")
+			10.totient should be (4)
+		}
+
+		it("35. Determine the prime factors of a given positive integer.") {
+			info("Construct a flat list containing the prime factors in ascending order.")
+
+			315.primeFactors should be (List(3,3,5,7))
+		}
+
+		it("36. Determine the prime factors of a given positive integer (2).") {
+			info("Construct a list containing the prime factors and their multiplicity.")
+
+			315.primeFactorMultiplicity should be (Map(3 -> 2, 5 -> 1, 7 -> 1))
+		}
+
+		it("37. Calculate Euler's totient function phi(m) (improved).") {
+			pending
+		}
+
+		it("38. Compare the two methods of calculating Euler's totient function.") {
+			pending	
+		}
+
+		it("39. A list of prime numbers.") {
+			pending	
+		}
+
+		it("40. Goldbach's conjecture.") {
+			pending	
+		}
+
+		it("41. A list of Goldbach compositions.") {
+			pending	
+		}
 	}
 } 
