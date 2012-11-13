@@ -481,4 +481,91 @@ class S99Test extends FunSpec with ShouldMatchers {
 			pending	
 		}
 	}
+
+	def and(a: Boolean, b: Boolean) = a & b
+
+	def xor(a: Boolean, b: Boolean) = a ^ b
+
+	def or(a: Boolean, b: Boolean) = a | b
+
+
+	def table2(fn: Function2[Boolean, Boolean, Boolean]): String = {
+		("A     B     result" :: {
+			for{
+				a <- List(true, false)
+				b <- List(true, false)
+			} yield {
+				"%-5s %-5s %s".format(a, b, fn(a,b))
+			}
+		}).mkString("\n")
+	}
+
+	class LogicSupport(a: Boolean) {
+		def and(b: Boolean): Boolean = a & b
+
+		def xor(b: Boolean): Boolean = a ^ b
+
+		def or(b: Boolean): Boolean = a | b
+	}
+
+	implicit def toLogicSupport(a: Boolean) = new LogicSupport(a)
+
+	def gray(n: Int): List[String] = {
+		if(n == 1) {
+			List("0", "1")
+		} else {
+			val pre = gray(n - 1)
+
+			pre.map { "0" + _ } ::: pre.reverse.map { "1" + _ }
+		}
+	}
+
+	def huffman(list: List[(String, Int)]): List[(String, Int)] = {
+		null
+	}
+
+	info("Logic and Codes")
+	describe("46 ~ 50 problems") {
+		it("46. Truth tables for logical expressions.") {
+			and(true, true) should be (true)
+
+			xor(true, true) should be (false)
+
+			table2((a: Boolean, b: Boolean) => and(a, or(a, b))) should be("""|A     B     result
+                                                                              |true  true  true
+                                                                              |true  false true
+                                                                              |false true  false
+                                                                              |false false false""".stripMargin)
+		}
+
+		it("47. Truth tables for logical expressions (2).") {
+			def not(a: Boolean) = !a
+
+			table2((a: Boolean, b: Boolean) => a and (a or not(b))) should be("""|A     B     result
+	                                                              |true  true  true
+	                                                              |true  false true
+	                                                              |false true  false
+	                                                              |false false false""".stripMargin)
+		}
+
+		it("48. Truth tables for logical expressions (3).") {
+			info("Omitted for now.")
+		}
+
+		it("49. Gray code.") {
+			gray(1) should be (List("0", "1"))
+			gray(2) should be (List("00", "01", "11", "10"))
+			gray(3) should be (List("000", "001", "011", "010", "110", "111", "101", "100"))
+		}
+
+		it("50. Huffman code.") {
+			info("First of all, consult a good book on discrete mathematics or algorithms for a detailed description of Huffman codes!")
+
+			info("""We suppose a set of symbols with their frequencies, given as a list of (S, F) Tuples. E.g. (("a", 45), ("b", 13), ("c", 12), ("d", 16), ("e", 9), ("f", 5)). Our
+objective is to construct a list of (S, C) Tuples, where C is the Huffman code word for the symbol S.""")
+
+			huffman(List(("a", 45), ("b", 13), ("c", 12), ("d", 16), ("e", 9), ("f", 5))) should be (List(("a",0), ("b",101), ("c",100), ("d",111), ("e",1101), ("f",1100)))
+		}
+
+	}
 } 
